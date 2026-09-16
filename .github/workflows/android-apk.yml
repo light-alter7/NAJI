@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm install --save-dev typescript
+          npm install --save-dev typescript@5.6.3
 
       - name: Add Android platform
         run: npx cap add android
