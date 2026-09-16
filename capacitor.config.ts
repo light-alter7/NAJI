@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.naji.app',
   appName: 'NAJI',
-  webDir: 'public',
+  webDir: '.',
   bundledWebRuntime: false,
 };
 
