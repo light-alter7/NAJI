@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NAJI — Sound Space</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#030508;--text:#eef5ff;--muted:#8994a5;
+  --glass:rgba(255,255,255,.055);--border:rgba(255,255,255,.13);
+}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body:before{content:"";position:fixed;inset:-20%;pointer-events:none;
+background:radial-gradient(circle at 50% 45%,rgba(130,190,255,.08),transparent 27%),
+radial-gradient(circle at 20% 20%,rgba(255,255,255,.035),transparent 22%);
+filter:blur(55px)}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+main{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:24px 26px}
+header{display:flex;justify-content:space-between;align-items:flex-start}
+.brand{font-size:13px;letter-spacing:.28em;text-transform:uppercase;font-weight:650}
+.sub{margin-top:5px;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.api-wrap{position:relative}
+.api-button,.glass{
+ border:1px solid var(--border);background:var(--glass);backdrop-filter:blur(25px) saturate(150%);
+ -webkit-backdrop-filter:blur(25px) saturate(150%);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 18px 55px rgba(0,0,0,.18)}
+.api-button{border-radius:13px;color:var(--text);padding:9px 12px;font-size:11px;cursor:pointer}
+.api-panel{display:none;position:absolute;right:0;top:44px;width:min(310px,82vw);padding:15px;border-radius:18px}
+.api-panel.open{display:block}
+.api-panel label{display:block;color:var(--muted);font-size:9px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:7px}
+.api-panel input{width:100%;padding:10px 11px;border-radius:10px;border:1px solid var(--border);
+background:rgba(0,0,0,.22);color:var(--text);outline:none}
+.api-row{display:flex;gap:8px;margin-top:10px}
+.api-row button{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,.07);
+color:var(--text);cursor:pointer}
+.api-note{font-size:9px;color:var(--muted);line-height:1.45;margin-top:9px}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-top:14px}
+.dot{width:6px;height:6px;border-radius:50%;background:#9ee7c0;box-shadow:0 0 14px #9ee7c0}
+.center{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+.orb{width:min(67vw,400px);aspect-ratio:1;border-radius:50%;position:relative;overflow:hidden;
+border:1px solid rgba(255,255,255,.18);
+background:radial-gradient(circle at 32% 25%,rgba(255,255,255,.19),rgba(255,255,255,.055) 27%,rgba(255,255,255,.015) 62%,transparent 72%);
+box-shadow:inset 0 1px 1px rgba(255,255,255,.17),inset 0 -50px 100px rgba(90,150,255,.07),
+0 0 100px rgba(130,190,255,.06)}
+.orb:before{content:"";position:absolute;inset:10%;border-radius:50%;border:1px solid rgba(255,255,255,.08)}
+.orb:after{content:"";position:absolute;inset:25%;border-radius:50%;border:1px solid rgba(255,255,255,.07)}
+#core{position:absolute;left:50%;top:50%;width:16%;height:16%;border-radius:50%;transform:translate(-50%,-50%);
+background:rgba(235,248,255,.14);filter:blur(3px);box-shadow:0 0 55px rgba(170,220,255,.3)}
+.label{position:absolute;bottom:calc(50% - min(33.5vw,200px) - 42px);left:50%;transform:translateX(-50%);
+font-size:10px;color:var(--muted);letter-spacing:.22em;text-transform:uppercase;white-space:nowrap}
+footer{display:flex;justify-content:center}
+.glass{min-width:min(450px,92vw);display:flex;justify-content:space-between;gap:24px;padding:13px 16px;border-radius:18px}
+.metric span{display:block;font-size:8px;color:var(--muted);letter-spacing:.16em;text-transform:uppercase;margin-bottom:4px}
+.metric strong{font-size:12px;font-weight:520}
+ .api-result{margin-top:10px;padding:10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,.28);font-size:9px;line-height:1.45;word-break:break-all;color:var(--text)}
+.api-result code{font-size:9px}
+@media(max-width:520px){main{padding:20px 17px}.orb{width:73vw}.label{bottom:calc(50% - 36.5vw - 42px)}.glass{min-width:0;width:100%;gap:12px}}
+
+.brand-wrap{display:flex;align-items:center;gap:10px}
+.brand-logo{width:34px;height:34px;border-radius:8px;object-fit:cover;display:block}
+</style>
+<link rel="icon" type="image/png" href="/naji-logo.png">
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<main>
+<header>
+  <div class="brand-wrap">
+    <img class="brand-logo" src="/naji-logo.png" alt="NAJI logo">
+    <div><div class="brand">NAJI</div><div class="sub">sound space</div></div>
+  </div>
+  <div>
+    <button class="api-button" id="apiBtn">Generate API</button>
+    <div class="api-panel glass" id="apiPanel">
+      <label>Developer API</label>
+      <div class="api-note">Generate a private API key for this deployment. The key is created by the server and stored in its .env file.</div>
+      <div class="api-row">
+        <button id="generateApi">Generate key</button>
+        <button id="close">Close</button>
+      </div>
+      <div id="apiResult" class="api-result" hidden></div>
+    </div>
+    <div class="status"><i class="dot"></i><span id="connection">connected</span></div>
+  </div>
+</header>
+
+<section class="center">
+  <div class="orb"><div id="core"></div></div>
+  <div class="label" id="state">listening</div>
+</section>
+
+<footer>
+  <div class="glass">
+    <div class="metric"><span>Device</span><strong>ESP32</strong></div>
+    <div class="metric"><span>Signal</span><strong id="signal">0%</strong></div>
+    <div class="metric"><span>State</span><strong id="live">Listening</strong></div>
+  </div>
+</footer>
+</main>
+
+<script>
+const c=document.getElementById("canvas"),ctx=c.getContext("2d");
+let W,H,dpr,energy=0,target=0,last=performance.now(),hit=0,hue=205;
+let particles=[];
+function resize(){dpr=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*dpr;c.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+addEventListener("resize",resize);resize();
+particles=Array.from({length:230},()=>({a:Math.random()*Math.PI*2,r:.10+Math.random()*.9,s:.00025+Math.random()*.0014,size:.35+Math.random()*1.5,o:.12+Math.random()*.55}));
+
+function setSignal(v){
+ v=Math.max(0,Math.min(1,Number(v)||0));
+ if(v>.35 && target<=.35){hit=1;hue=(hue+67+Math.random()*70)%360}
+ target=v;
+ document.getElementById("signal").textContent=Math.round(v*100)+"%";
+ document.getElementById("state").textContent=v>.08?"active":"listening";
+ document.getElementById("live").textContent=v>.08?"Active":"Listening";
+}
+function frame(t){
+ let dt=Math.min(32,t-last);last=t;energy+=(target-energy)*.12;hit*=.88;
+ ctx.clearRect(0,0,W,H);
+ const cx=W/2,cy=H/2,base=Math.min(W,H)*.195;
+ const hueNow=(hue+energy*80)%360;
+ const glow=ctx.createRadialGradient(cx,cy,0,cx,cy,base*(1.5+energy*3+hit));
+ glow.addColorStop(0,`hsla(${hueNow},90%,82%,${.07+energy*.35+hit*.12})`);
+ glow.addColorStop(.35,`hsla(${hueNow},90%,65%,${.025+energy*.12})`);
+ glow.addColorStop(1,"rgba(0,0,0,0)");
+ ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,base*2.3,0,Math.PI*2);ctx.fill();
+
+ particles.forEach(p=>{
+   p.a+=p.s*dt*(1+energy*7);
+   const wave=Math.sin(t*.004+p.a*5)*energy*.06;
+   const r=base*(p.r+wave)+(hit*base*(.35+p.r));
+   const x=cx+Math.cos(p.a)*r,y=cy+Math.sin(p.a)*r;
+   ctx.beginPath();ctx.arc(x,y,p.size*(1+energy*3+hit*1.5),0,Math.PI*2);
+   ctx.fillStyle=`hsla(${(hueNow+p.r*90)%360},85%,82%,${p.o*(.45+energy*1.8)})`;ctx.fill();
+ });
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// API controls
+const panel=document.getElementById("apiPanel");
+const result=document.getElementById("apiResult");
+document.getElementById("apiBtn").onclick=()=>panel.classList.toggle("open");
+document.getElementById("close").onclick=()=>panel.classList.remove("open");
+
+document.getElementById("generateApi").onclick=async()=>{
+  const btn=document.getElementById("generateApi");
+  btn.disabled=true;
+  btn.textContent="Generating…";
+  result.hidden=false;
+  result.textContent="Creating your private key…";
+  try{
+    const r=await fetch("/api/generate-key",{method:"POST"});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.error||"Unable to generate key");
+    result.innerHTML="Your key (shown once):<br><code>"+data.apiKey+"</code>";
+    document.getElementById("connection").textContent="API ready";
+  }catch(e){
+    result.textContent=e.message;
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Generate key";
+  }
+};
+
+// Public sound endpoint is intentionally available without an API key so
+// the normal website works immediately. The generated key protects the
+// developer endpoint /api/sound/secure.
+async function poll(){
+ try{
+    const r=await fetch("/api/sound",{cache:"no-store"});
+    if(!r.ok)throw new Error();
+    const data=await r.json();
+    const level=typeof data==="number"?data:(data.level ?? data.sound ?? 0);
+    setSignal(level);
+    document.getElementById("connection").textContent="connected";
+ }catch(e){
+    document.getElementById("connection").textContent="offline";
+ }
+}
+setInterval(poll,80);
+poll();
+
+// Optional local test: click/tap the crystal to create a sound-like hit.
+document.querySelector(".orb").addEventListener("pointerdown",()=>{
+ setSignal(.9);
+ setTimeout(()=>setSignal(.04),260);
+});
+</script>
+</body>
+</html>
