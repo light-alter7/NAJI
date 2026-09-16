@@ -7,8 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "android:sync": "npx cap sync android",
-    "prepare:web": "node scripts/build-public.js"
+    "prepare:web": "node scripts/build-public.js",
+    "android:sync": "npm run prepare:web && npx cap sync android"
   },
   "engines": {
     "node": ">=18"
