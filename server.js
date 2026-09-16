@@ -10,7 +10,7 @@ const ROOT = __dirname;
 const ENV_FILE = path.join(ROOT, ".env");
 
 app.use(express.json({ limit: "32kb" }));
-app.use(express.static(path.join(ROOT, "public"), { extensions: ["html"] }));
+app.use(express.static(ROOT, { index: "index.html", extensions: ["html"] }));
 
 function generateKey() {
   return "aeth_" + crypto.randomBytes(32).toString("hex");
@@ -83,9 +83,13 @@ app.get("/api", (req, res) => {
   });
 });
 
+app.get("/", (req, res) => {
+  res.sendFile(path.join(ROOT, "index.html"));
+});
+
 // Custom 404 page for everything else.
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(ROOT, "public", "404.html"));
+  res.status(404).sendFile(path.join(ROOT, "404.html"));
 });
 
 app.listen(PORT, () => {
